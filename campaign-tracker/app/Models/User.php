@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'role',
         'zone_id',
+        'electoral_area_id',
         'status',
     ];
 

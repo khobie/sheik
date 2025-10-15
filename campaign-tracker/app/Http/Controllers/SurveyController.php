@@ -14,7 +14,18 @@ class SurveyController extends Controller
     public function index(Request $request)
     {
         $query = Survey::with(['user','pollingStation.electoralArea.zone'])->orderByDesc('survey_date');
-        // TODO: apply zone/role-based filtering later
+        $user = $request->user();
+        if ($user->role === 'ZONAL_COORDINATOR') {
+            $query->whereHas('pollingStation.electoralArea', function ($q) use ($user) {
+                $q->where('zone_id', $user->zone_id);
+            });
+        } elseif ($user->role === 'AREA_COORDINATOR') {
+            $query->whereHas('pollingStation', function ($q) use ($user) {
+                $q->where('electoral_area_id', $user->electoral_area_id);
+            });
+        } elseif ($user->role === 'POLLING_AGENT') {
+            $query->where('user_id', $user->id);
+        }
         $surveys = $query->paginate(20);
         return view('surveys.index', compact('surveys'));
     }
