@@ -7,6 +7,8 @@ use App\Http\Controllers\ElectoralAreaController;
 use App\Http\Controllers\PollingStationController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\ExportController;
 use App\Models\Zone;
 use App\Models\ElectoralArea;
 
@@ -35,6 +37,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('electoral-areas', ElectoralAreaController::class)->middleware('can:admin');
     Route::resource('polling-stations', PollingStationController::class)->middleware('can:admin');
     Route::resource('surveys', SurveyController::class)->only(['index','create','store','show']);
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
+    Route::get('/exports/surveys.csv', [ExportController::class, 'surveysCsv'])->name('exports.surveys.csv');
 
     // Dependent dropdown AJAX endpoints (authenticated)
     Route::get('/ajax/zones/{zone}/areas', function (Zone $zone) {
