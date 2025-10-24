@@ -1,0 +1,68 @@
+! Branch 4 Edge Router - Router-on-a-stick, EIGRP, DHCP
+hostname BR4-EDGE
+no ip domain-lookup
+ip domain-name bank.local
+!
+interface GigabitEthernet0/0
+ description LAN trunk to switch
+ no shutdown
+!
+interface GigabitEthernet0/0.10
+ encapsulation dot1q 10
+ ip address 10.1.4.1 255.255.255.0
+!
+interface GigabitEthernet0/0.20
+ encapsulation dot1q 20
+ ip address 10.2.4.1 255.255.255.0
+!
+interface GigabitEthernet0/0.99
+ encapsulation dot1q 99
+ ip address 10.3.4.1 255.255.255.0
+!
+interface Serial0/0/0
+ description WAN to HQ-EDGE
+ ip address 10.255.0.14 255.255.255.252
+ encapsulation ppp
+ no shutdown
+!
+! DHCP pools
+ip dhcp excluded-address 10.1.4.1 10.1.4.20
+ip dhcp excluded-address 10.2.4.1 10.2.4.20
+ip dhcp excluded-address 10.3.4.1 10.3.4.20
+!
+ip dhcp pool BR4-USERS
+ network 10.1.4.0 255.255.255.0
+ default-router 10.1.4.1
+ dns-server 10.0.50.10
+ domain-name bank.local
+!
+ip dhcp pool BR4-VOICE
+ network 10.2.4.0 255.255.255.0
+ default-router 10.2.4.1
+ option 150 ip 10.0.254.1
+ domain-name bank.local
+!
+ip dhcp pool BR4-MGMT
+ network 10.3.4.0 255.255.255.0
+ default-router 10.3.4.1
+ dns-server 10.0.50.10
+ domain-name bank.local
+!
+! EIGRP
+router eigrp 10
+ passive-interface default
+ no passive-interface Serial0/0/0
+ no passive-interface GigabitEthernet0/0.10
+ no passive-interface GigabitEthernet0/0.20
+ no passive-interface GigabitEthernet0/0.99
+ network 10.1.4.0 0.0.0.255
+ network 10.2.4.0 0.0.0.255
+ network 10.3.4.0 0.0.0.255
+ network 10.255.0.12 0.0.0.3
+ eigrp log-neighbor-changes
+ no auto-summary
+!
+line con 0
+ logging synchronous
+!
+end
