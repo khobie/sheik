@@ -1,0 +1,124 @@
+! HQ Edge Router - NAT, EIGRP, CME
+hostname HQ-EDGE
+no ip domain-lookup
+ip domain-name bank.local
+!
+! NAT inside sources (enterprise RFC1918)
+ip access-list standard NAT-INSIDE
+ permit 10.0.0.0 0.0.255.255
+!
+! Internet-facing ACL (basic hardening)
+ip access-list extended INTERNET-IN
+ remark Allow established TCP and common ICMP replies
+ permit tcp any any established
+ permit icmp any any echo-reply
+ permit icmp any any time-exceeded
+ permit icmp any any unreachable
+ remark Block direct access to internal RFC1918
+ deny   ip any 10.0.0.0 0.255.255.255
+ permit ip any any
+!
+class-map match-any VOICE-RTP
+ match ip rtp 16384 16383
+!
+policy-map WAN-OUT
+ class VOICE-RTP
+  priority percent 30
+ class class-default
+  fair-queue
+!
+interface GigabitEthernet0/0
+ description To Internet/ISP
+ ip address 203.0.113.2 255.255.255.252
+ ip access-group INTERNET-IN in
+ ip nat outside
+ no shutdown
+!
+interface GigabitEthernet0/1
+ description To HQ-CORE (routed link)
+ ip address 10.0.254.1 255.255.255.252
+ ip nat inside
+ no shutdown
+!
+interface Serial0/0/0
+ description WAN to BR1
+ ip address 10.255.0.1 255.255.255.252
+ encapsulation ppp
+ service-policy output WAN-OUT
+ no shutdown
+!
+interface Serial0/0/1
+ description WAN to BR2
+ ip address 10.255.0.5 255.255.255.252
+ encapsulation ppp
+ service-policy output WAN-OUT
+ no shutdown
+!
+interface Serial0/1/0
+ description WAN to BR3
+ ip address 10.255.0.9 255.255.255.252
+ encapsulation ppp
+ service-policy output WAN-OUT
+ no shutdown
+!
+interface Serial0/1/1
+ description WAN to BR4
+ ip address 10.255.0.13 255.255.255.252
+ encapsulation ppp
+ service-policy output WAN-OUT
+ no shutdown
+!
+! EIGRP routing
+router eigrp 10
+ passive-interface default
+ no passive-interface GigabitEthernet0/1
+ no passive-interface Serial0/0/0
+ no passive-interface Serial0/0/1
+ no passive-interface Serial0/1/0
+ no passive-interface Serial0/1/1
+ network 10.0.254.0 0.0.0.3
+ network 10.255.0.0 0.0.0.3
+ network 10.255.0.4 0.0.0.3
+ network 10.255.0.8 0.0.0.3
+ network 10.255.0.12 0.0.0.3
+ eigrp log-neighbor-changes
+ no auto-summary
+!
+! NAT overload to Internet
+ip nat inside source list NAT-INSIDE interface GigabitEthernet0/0 overload
+!
+! CME (Cisco Unified CME - basic)
+telephony-service
+ max-ephones 50
+ max-dn 100
+ ip source-address 10.0.254.1 port 2000
+ auto assign 1 to 10
+ time-format 24
+ create cnf-files
+!
+! Example directory numbers (phones will autoload via DHCP option 150)
+ephone-dn 1
+ number 2001
+!
+ephone-dn 2
+ number 2002
+!
+ephone-dn 3
+ number 1001
+!
+ephone-dn 4
+ number 3001
+!
+ephone-dn 5
+ number 4001
+!
+ephone-dn 6
+ number 5001
+!
+line con 0
+ logging synchronous
+line vty 0 4
+ login
+ transport input telnet ssh
+!
+end
