@@ -1,0 +1,25 @@
+{
+  "name": "koforidua-artisan-booking-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Web-based application for booking and managing artisan services in the Koforidua Municipality.",
+  "scripts": {
+    "client:dev": "npm run dev --prefix client",
+    "client:build": "npm run build --prefix client",
+    "client:lint": "npm run lint --prefix client",
+    "server:dev": "npm run dev --prefix server",
+    "server:start": "npm start --prefix server",
+    "server:check": "npm run check --prefix server",
+    "build": "npm run client:build",
+    "lint": "npm run client:lint && npm run server:check"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khobie/sheik.git"
+  },
+  "license": "MIT"
+}
